@@ -178,19 +178,29 @@ int main()
     cv::String imgPath = ini.GetString("FILE", "input", ""); //"//192.168.0.199/ubay_share/Container data/Truck_2/*.png
     cv::String outPath = ini.GetString("FILE", "output", "");
     cv::String groundtruthPath = outPath + "/ground_truth/";
-    cv::glob(imgPath, filenames);
+    //cv::glob(imgPath, filenames);
+    std::vector<cv::String> extensions = {"jpg", "jfif"};//, "png"
+    std::vector<cv::String> currentExtStr;
+    for (int i = 0; i < extensions.size(); ++i)
+    {
+        cv::glob(imgPath + "/*." + extensions[i], currentExtStr);
+        filenames.insert(filenames.end(), currentExtStr.begin(), currentExtStr.end());
+    }
     cv::utils::fs::createDirectory(outPath);
     cv::utils::fs::createDirectory(groundtruthPath);
     //cv::VideoCapture source(imgPath);
 
     size_t nFiles = filenames.size();
     log_file << "The number of images is " << nFiles << std::endl;
+    cv::String ext;
     //while (cv::waitKey(1) < 1)
     //for(int i = 0; i < 6000; ++i)
     for(size_t i = 0; i < nFiles && cv::waitKey(1) < 1; ++i)
     {
         log_file << filenames[i] << std::endl;
         frame = cv::imread(filenames[i]);
+        ext = filenames[i].substr(filenames[i].find_last_of("."));// size() - 4);
+        std::cout << ext << std::endl;
         //source >> frame;
         if (frame.empty())
         {
@@ -269,8 +279,8 @@ int main()
             //    continue;
             //if (c != 7)
             //    continue;
-            if (c < 5)
-                continue;
+            //if (c < 5)
+            //    continue;
             for (size_t i = 0; i < indices[c].size(); ++i)
             {
                 const auto color = colors[c % NUM_COLORS];
@@ -297,21 +307,33 @@ int main()
                 }
                 if (rect.y + rect.height >= s.height)
                     rect.height = s.height - rect.y;
+                log_file << rect.x << " " << rect.y << " " << rect.width << " " << rect.height << std::endl;
                 cv::Rect roi(rect.x, rect.y, rect.width, rect.height);
                 cv::Range rows(rect.x, rect.x + rect.width);
                 cv::Range cols(rect.y, rect.y + rect.height);
                 cv::Mat matRoi = frame(cols, rows);// rows, cols);
-                cv::String name = groundtruthPath + "/";
+                cv::String name = groundtruthPath;
+                
                 name += filenames[i].substr(filenames[i].find_last_of("/\\") + 1);// filenames[i];
-                name = name.substr(0, name.size() - 4);
-                while (cv::utils::fs::exists(name + ".png") == true)
+                name = name.substr(0, name.find_last_of("."));
+        
+                while (cv::utils::fs::exists(name + ".jpg") == true)
                     name += "#";
-                name += ".png";
+                name += ".jpg";
+                std::cout << name << std::endl;
                 //cv::imwrite(cv::format("Results LP/Image%d.png", i), frame);
-                cv::imwrite(name, matRoi);
+                try
+                {
+                    cv::imwrite(name, matRoi);
+                }
+                catch (const std::exception &ex)
+                {
+                    log_file << "Error while rendering ground truth image: " << ex.what() << std::endl;
+                }
+                
                 std::ostringstream label_ss;
-                //label_ss << class_names[c] << ": " << std::fixed << std::setprecision(2) << scores[c][idx];
-                label_ss << "license plate";
+                label_ss << class_names[c] << ": " << std::fixed << std::setprecision(2) << scores[c][idx];
+                //label_ss << "license plate";
 
                 auto label = label_ss.str();
 
@@ -406,18 +428,33 @@ int main()
         cv::putText(frame, stats.c_str(), cv::Point(0, stats_bg_sz.height + 5), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(255, 255, 255));
 
         cv::String name = outPath;
-        name += "\\";
-        name += filenames[i].substr(filenames[i].find_last_of("/\\") + 1);// filenames[i];
-        name += ".png";
+        name += "/\\";
+        name += filenames[i].substr(filenames[i].find_last_of("/\\") + 1);// , filenames[i].find_last_of("."));// +1);// filenames[i];
+        name = name.substr(0, name.find_last_of(".") + 1);
+        //std::cout << filenames[i].substr(filenames[i].find_last_of(".")) << std::endl;
+        std::cout << "Final image 1: " << name << std::endl;
+        name += "png";
+        std::cout << "Final image 2: " << name << std::endl;
+        //name += ext;
+        //std::cout << "Final image 2: " << name << std::endl;
+        //name += ext;// ".png";
         //cv::imwrite(cv::format("Results LP/Image%d.png", i), frame);
-        cv::imwrite(name, frame);
-        //cv::namedWindow("output");
-        //cv::imshow("output", frame);
-        //cv::waitKey(60);
+        try
+        {
+            cv::imwrite(name, frame);
+        }
+        catch (const std::exception &ex)
+        {
+            log_file << "Error while rendering final image: " << ex.what() << std::endl;
+        }
+        cv::namedWindow("output");
+        cv::imshow("output", frame);
+        cv::waitKey(1800);
         //out.write(frame);
     }
     //source.release();
     //out.release();
     cv::destroyAllWindows();
+    std::cout << "Finished!";
     return 0;
 }
