@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on March 3rd 2021
-
-@author: Thai-Hoa Huynh
+Convert annotation files from Pascal VOC format (.xml) to YOLO format (.txt)
 @credit: https://gist.github.com/Amir22010/a99f18ca19112bc7db0872a36a03a1ec
 """
 
@@ -12,11 +10,12 @@ from glob import glob
 import xml.etree.ElementTree as ET
 import argparse
 
-def convert(size, box):
+def convert(size, box, digit=6):
     '''
     Convert object size into bounding box:
     @size [in]
     @box [in]
+    @digit
     '''
     dw = 1./(size[0])
     dh = 1./(size[1])
@@ -24,10 +23,10 @@ def convert(size, box):
     y = (box[2] + box[3])/2.0 - 1
     w = box[1] - box[0]
     h = box[3] - box[2]
-    x = x*dw
-    w = w*dw
-    y = y*dh
-    h = h*dh
+    x = round(x*dw, digit)
+    w = round(w*dw, digit)
+    y = round(y*dh, digit)
+    h = round(h*dh, digit)
     return (x,y,w,h)
 
 def txt_transform(classes, inputAnn, outputAnn):  
@@ -39,7 +38,6 @@ def txt_transform(classes, inputAnn, outputAnn):
     ''' 
     anns = glob(inputAnn + '/*.xml')
     for target in anns:
-        #target = inputAnn + '/' + os.path.basename(imgpath).split('.')[0] + '.xml'
         outAnnPath = outputAnn + '/' + os.path.basename(target).split('.')[0] + '.txt'
         inFile = open(target)
         outFile = open(outAnnPath, "wt")
@@ -63,9 +61,9 @@ def txt_transform(classes, inputAnn, outputAnn):
        
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-y", "--output_ann", help="Directory of YOLO annotation files (.txt)",
+    parser.add_argument("-y", "--output_ann", help="Directory of output YOLO annotation files (.txt)",
                     type=str, default="coco/yolo")
-    parser.add_argument("-p", "--input_ann", help="Directory of Pascal VOC annotation files (.xml)",
+    parser.add_argument("-p", "--input_ann", help="Directory of input Pascal VOC annotation files (.xml)",
                     type=str, default="coco/voc")
     parser.add_argument("-c", "--class_file", help="Directory of class file",
                     type=str, default="obj.names")
@@ -79,3 +77,4 @@ if __name__ == "__main__":
     for line in classFile:
         classes.append(line[:-1])
     txt_transform(classes, inputAnns, outputAnns)
+    print('Converting Pascal VOC to YOLO finished!')
