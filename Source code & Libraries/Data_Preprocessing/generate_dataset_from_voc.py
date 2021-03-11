@@ -1,5 +1,8 @@
 """
 Generate label dataset using Pascal VOC annotation files
+Created on March 4th 2021
+
+@author: Thai-Hoa Huynh
 """
 
 import os
@@ -45,6 +48,9 @@ if __name__ == "__main__":
                 classDir += '/'
                 xmlbox = obj.find('bndbox')
                 cropImg = img[int(xmlbox.find('ymin').text): int(xmlbox.find('ymax').text), int(xmlbox.find('xmin').text): int(xmlbox.find('xmax').text)]
-                cv2.imwrite(classDir + ids[i].split('.')[0] + '_' + str(j) + '.jpg', cropImg)
+                try:
+                    cv2.imwrite(classDir + ids[i].split('.')[0] + '_' + str(j) + '.jpg', cropImg)
+                except:
+                    pass
             inFile.close()
     print('Generating dataset from Pascal VOC annotation finished!')

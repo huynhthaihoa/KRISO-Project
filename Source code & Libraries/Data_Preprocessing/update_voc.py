@@ -1,5 +1,8 @@
 """
 Update class name in VOC annotation files based on label dataset
+Created on March 4th 2021
+
+@author: Thai-Hoa Huynh
 """
 
 import os
@@ -46,9 +49,9 @@ if __name__ == "__main__":
             imgs += glob(subdir + ext)
             for imgpath in imgs:
                 basename = os.path.basename(imgpath)
-                annname = basename.split('_')[0]
+                annname = basename[:basename.rfind('_')]
                 annpath = anns + annname + '.xml'
-                order = int((basename.split('_')[1]).split('.')[0])
+                order = int(basename[basename.rfind('_') + 1: basename.rfind('.')])
                 if os.path.isfile(annpath) is True:
                     if new != "":
                         newpath = new + annname + '.xml'
