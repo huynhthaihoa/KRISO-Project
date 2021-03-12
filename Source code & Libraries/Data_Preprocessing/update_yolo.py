@@ -58,20 +58,25 @@ if __name__ == "__main__":
                         oldpath = annpath
                         annpath = new + annname + '.txt'
                         data[annpath] = data[oldpath]
-                    annfile = open(annpath, "wt")
                     for i in range(len(data[annpath])):
-                        data_conv = data[annpath][i]
                         if i == order:
-                            data_conv[0] = cls_id
-                            data[annpath][0] = cls_id
-                        for j in range(5):
-                            if(j == 0):
-                                annfile.write(str(int(data_conv[j])))
-                            else:
-                                annfile.write(str(data_conv[j]))
-                            if(j < 4):
-                                annfile.write(' ')
-                            else:
-                                annfile.write('\n')
-                    annfile.close()
-    print('Updating YOLO annotation finished!')
+                            print(".", end="", flush=True)
+                            data[annpath][i][0] = cls_id
+                            break
+    for annpath in data:
+        print(",", end="", flush=True)
+        annfile = open(annpath, "wt")
+        n_bboxes = len(data[annpath])
+        for i in range(n_bboxes):
+            data_conv = data[annpath][i]
+            for j in range(5):
+                if(j == 0):
+                    annfile.write(str(int(data_conv[j])))
+                else:
+                    annfile.write(str(data_conv[j]))
+                if(j < 4):
+                    annfile.write(' ')
+                else:
+                    annfile.write('\n')                
+        annfile.close()
+    print('\nUpdating YOLO annotation finished!')
